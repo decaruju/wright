@@ -12,9 +12,61 @@ window.wright = {
         {
             selector: '.warning',
             action: "replaceContent",
-            html: "hello people"
+            html: "hello people",
+            flag: 'removeGuys',
+        },
+        {
+            selector: '.warning',
+            action: "replaceContent",
+            html: "hello ladies",
+            flag: 'makeGuysLadies',
         },
     ],
+    flags: {
+        removeGuys: {
+            default: false,
+            ruleset: [
+                {
+                    clauses: [
+                        {
+                            key: 'gender',
+                            comparison: 'eq',
+                            value: 'x',
+                        },
+                    ],
+                    value: true,
+                },
+            ],
+        },
+        makeGuysLadies: {
+            default: false,
+            ruleset: [
+                {
+                    clauses: [
+                        {
+                            key: 'gender',
+                            comparison: 'eq',
+                            value: 'f',
+                        },
+                    ],
+                    value: true,
+                },
+            ],
+        },
+    },
+    flagValue(flag) {
+        const flagDefinition = this.flags[flag];
+        if (flagDefinition === undefined) console.error(`Unknown flag ${flag}`);
+        let returnValue = flagDefinition.default;
+        flagDefinition.ruleset.forEach((rule) => {
+            const ruleApplies = rule.clauses.every((clause) => this.user[clause.key] == clause.value);
+            if (ruleApplies) {
+                returnValue = rule.value;
+            }
+        });
+        console.log(flag, returnValue);
+        return returnValue;
+    },
     addRule(rule) {
         this.rules.push(rule);
         if (this.isReady) {
@@ -26,6 +78,7 @@ window.wright = {
         this.isReady = true;
         this.rules.forEach((rule) => {
             if (rule.applied) return;
+            if (rule.flag && !this.flagValue(rule.flag)) return;
             this.applyRule(rule);
             rule.applied = true;
         });
